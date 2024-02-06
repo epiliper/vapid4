@@ -1,6 +1,6 @@
 import argparse
 import platform
-
+import sys
 
 # This file creates values needed for global variables in vapid4.py and imports.py. 
 ## Arguments from argparse
@@ -75,7 +75,11 @@ def arg_init():
         '--revica',
         help='Add Revica version used for consensus calling and github url.')
 
-    return parser.parse_args()
+    try: 
+        return parser.parse_args()
+    except BaseException: 
+        parser.print_help()
+        sys.exit(0)
 
 #return appropriate slash to use, to be set to SLASH in main scripts
 def check_os():

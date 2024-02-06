@@ -303,33 +303,6 @@ def blast_n_stuff(strain, our_fasta_loc):
     return name_of_virus, our_seq, ref_seq, ref_seq_gb, need_to_rc
 
 
-# Takes in two sequences with gaps inserted inside of them and returns arrays that have a -1 in the gap locations and
-# count up from 1 in the nucleotide areas - This data structure allows for extremely rapid conversion between relative
-# locations in the two sequences although does assume that these genes are of uniform length
-# NOTE: This means that when we have reads that like don't have the start codons of the first gene or something we'll
-# get a -1 for the start location on our annotation
-def build_num_arrays(our_seq, ref_seq):
-    ref_count = 0
-    our_count = 0
-    ref_num_array = []
-    our_num_array = []
-
-    for x in range(0, len(ref_seq)):
-        if ref_seq[x] != '-':
-            ref_count += 1
-            ref_num_array.append(ref_count)
-        else:
-            ref_num_array.append(-1)
-
-        if our_seq[x] != '-':
-            our_count += 1
-            our_num_array.append(our_count)
-        else:
-            our_num_array.append(-1)
-
-    return our_num_array, ref_num_array
-
-
 # Takes a gene start index relative to an unaligned reference sequence and then returns the location of the same start
 # area on the unaligned sequence that we're annotating using the number
 # arrays to finish
@@ -472,27 +445,6 @@ def pull_correct_annotations(strain, our_seq, ref_seq, genome):
             gene_loc_list[entry][y] = adjust(
                 int(gene_loc_list[entry][y]), our_seq_num_array, ref_seq_num_array, genome)
     return gene_loc_list, gene_product_list, all_loc_list, all_product_list, name_of_the_feature_list
-
-
-# Takes a nucleotide sequence and a start and end position [1 indexed] and search for a stop codon from the start
-# to the end + 60 so every codon in the provided gene and then 3 after it. Return the first stop codon found or if no
-# stop codon is found return the original end value and print a warning
-def find_end_stop(genome, start, end):
-    # save the provided end
-    start -= 1
-    old_end = end
-    end = start + 3
-    # Search for stop codons in DNA and RNA space until 3 codons after the provided end.
-    # Turns out 3 codons isn't enough
-    while genome[end -
-                 3:end].upper() not in 'TGA,TAA,TAG,UGA,UAA,UAG' and end <= (old_end +
-                                                                             60):
-        end += 3
-    if end == old_end + 60:
-        # print('WARNING no stop codon found, examine reference and original sequence')
-        return old_end
-    else:
-        return end
 
 
 # takes a single strain name and a single genome and annotates and save the entire virus and annotations package
@@ -807,8 +759,6 @@ def process_para(
 # Read the provided DBLink metadata csv file and return a dictionary of strain:{'bioproject': ???, 'biosample': ???, 'sra': ???}
 # if any of theturn os.path.abspath(file_name) bioproject, biosample, sra
 # accessions are not provided, the corresponding value would be None.
-
-
 def read_dblink_metadata_loc(dbmeta):
     meta_dict = {}
     first = True
@@ -878,80 +828,16 @@ def check_for_stops(sample_name):
 if __name__ == '__main__':
 
     start_time = timeit.default_timer()
-    SLASH = check_os()
 
-    parser = argparse.ArgumentParser(
-        description='Version ' +
-        VERSION +
-        '\nPrepares FASTA file for NCBI Genbank submission '
-        'through local or online blastn-based annotation of viral sequences. '
-        'In default mode, VAPiD searches this folder for our viral databases.')
-    parser.add_argument(
-        'fasta_file',
-        help='Input file in .fasta format containing complete or near complete '
-        'genomes for all the viruses that you want to have annotated')
-    parser.add_argument(
-        'author_template_file_loc',
-        help='File path for the NCBI-provided sequence author template file'
-        ' (should have a .sbt extension)\n https://submit.ncbi.nlm.nih.gov/genbank/template/submission/')
-    parser.add_argument(
-        '--metadata_loc',
-        help='If you\'ve input the metadata in the provided csv, specify the location '
-        'with this optional argument. Otherwise all metadata will be manually prompted for.')
-    parser.add_argument(
-        '--src_file', help='A tab-delimited source modifiers table (suffix .src). '
-        'https://www.ncbi.nlm.nih.gov/WebSub/html/help/genbank-source-table.html')
-    parser.add_argument(
-        '--dblink_metadata_loc',
-        help='Metadata csv file containing bioproject, biosample, or sra accessions.')
-    parser.add_argument(
-        '--r', help='If you want to specify a specific NCBI reference, put the accession number here '
-        '- must be the exact accession number - note: feature forces all sequences in FASTA to be this viral species.')
-    parser.add_argument(
-        '--f',
-        help='specify a custom gbf file that you would like to annotate off of')
-    parser.add_argument(
-        '--db',
-        help='specify the local blast database name.  You MUST have blast+ with blastn'
-        'installed correctly on your system path for this to work.')
-    parser.add_argument(
-        '--online',
-        action='store_true',
-        help='Force VAPiD to blast against online database.  This is good for machines that don\'t '
-        'have blast+ installed or if the virus is really strange.'
-        'Warning: this can be EXTREMELY slow, up to ~5-25 minutes a virus')
-    parser.add_argument(
-        '--spell_check',
-        action='store_true',
-        help='Turn on spellchecking for protein annoations ')
-    parser.add_argument(
-        '--all',
-        action='store_true',
-        help='Use this flag to transfer ALL annotations from reference, this is largely untested')
-    parser.add_argument(
-        '--slashes', action='store_true', help='Use this flag to allow any characters in the name of your virus - This allows '
-        'you to submit with a fasta file formated like >Sample1 (Human/USA/2016/A) Complete CDS'
-        ' make sure that your metadata file only contains the first part of your name \'Sample1\' in the example above. '
-        'You can also submit names with slashes by specifying in the metadata sheet under the header full_name, if you do that '
-        'you do not need to use this flag')
-    parser.add_argument(
-        '--dna',
-        action='store_true',
-        help='Make all files annotated by this run be marked as DNA instead of the default (RNA)')
-    parser.add_argument(
-        '--output_loc',
-        help='Specifies an output location for all files.')
-    parser.add_argument(
-        '--revica',
-        help='Add Revica version used for consensus calling and github url.')
+    # try:
+    #     args = arg_init()
+    # except BaseException:
+    #     parser.print_help()
+    #     sys.exit(0)
 
+    args = arg_init()
 
-    try:
-        args = parser.parse_args()
-    except BaseException:
-        parser.print_help()
-        sys.exit(0)
-
+                                                                        
     fasta_loc = args.fasta_file
     if args.dna:
         nuc_acid_type = 'DNA'

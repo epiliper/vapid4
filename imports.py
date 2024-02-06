@@ -381,3 +381,49 @@ def create_new_sbt(sbt, dblink_meta_dict, strain):
         return os.path.abspath(file_name)
 
 
+# Takes in two sequences with gaps inserted inside of them and returns arrays that have a -1 in the gap locations and
+# count up from 1 in the nucleotide areas - This data structure allows for extremely rapid conversion between relative
+# locations in the two sequences although does assume that these genes are of uniform length
+# NOTE: This means that when we have reads that like don't have the start codons of the first gene or something we'll
+# get a -1 for the start location on our annotation
+def build_num_arrays(our_seq, ref_seq):
+    ref_count = 0
+    our_count = 0
+    ref_num_array = []
+    our_num_array = []
+
+    for x in range(0, len(ref_seq)):
+        if ref_seq[x] != '-':
+            ref_count += 1
+            ref_num_array.append(ref_count)
+        else:
+            ref_num_array.append(-1)
+
+        if our_seq[x] != '-':
+            our_count += 1
+            our_num_array.append(our_count)
+        else:
+            our_num_array.append(-1)
+
+    return our_num_array, ref_num_array
+
+# Takes a nucleotide sequence and a start and end position [1 indexed] and search for a stop codon from the start
+# to the end + 60 so every codon in the provided gene and then 3 after it. Return the first stop codon found or if no
+# stop codon is found return the original end value and print a warning
+def find_end_stop(genome, start, end):
+    # save the provided end
+    start -= 1
+    old_end = end
+    end = start + 3
+    # Search for stop codons in DNA and RNA space until 3 codons after the provided end.
+    # Turns out 3 codons isn't enough
+    while genome[end -
+                 3:end].upper() not in 'TGA,TAA,TAG,UGA,UAA,UAG' and end <= (old_end +
+                                                                             60):
+        end += 3
+    if end == old_end + 60:
+        # print('WARNING no stop codon found, examine reference and original sequence')
+        return old_end
+    else:
+        return end
+
