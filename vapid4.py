@@ -32,6 +32,7 @@ SLASH = check_os()
 # value to determine if names should be allowed to have system protected characters like / in them. Returns three lists with the names of
 # the strains in the first one and the genomes as strings in the second list, the third list is only used when the slashes argument is true
 # also changes U's to T's
+
 def read_fasta(fasta_file_loc, slashes=False):
     strain_list = []
     genome_list = []
@@ -452,8 +453,6 @@ def pull_correct_annotations(strain, our_seq, ref_seq, genome):
 def annotate_a_virus(
         strain,
         genome,
-        metadata,
-        coverage,
         sbt_loc,
         full_name,
         nuc_a_type,
@@ -470,7 +469,7 @@ def annotate_a_virus(
                 strain +
                 ' has _R_ as the first part of the sequence charachters YOU HAVE TO CHANGE THIS')
     write_fasta(strain, genome)
-
+        
     name_of_virus, our_seq, ref_seq, ref_accession, need_to_rc = blast_n_stuff(
         strain, strain + SLASH + strain + '.fasta')
 
@@ -489,7 +488,7 @@ def annotate_a_virus(
     gene_loc_list, gene_product_list, all_loc_list, all_product_list, name_of_the_feature_list = pull_correct_annotations(
         strain, our_seq, ref_seq, genome)
 
-    write_cmt(strain, coverage, ref_accession, did_we_reverse_complement)
+    write_cmt(strain, ref_accession, did_we_reverse_complement)
 
     write_fsa(strain, genome, full_name, nuc_a_type)
     extra_stuff = ''
@@ -844,29 +843,23 @@ if __name__ == '__main__':
     else:
         nuc_acid_type = 'RNA'
 
+    print(f"This is the nucleic acid in question {nuc_acid_type}")
+
+
     sbt_file_loc = args.author_template_file_loc
 
     virus_strain_list, virus_genome_list, full_name_list = read_fasta(
         fasta_loc, args.slashes)
+
+    print(f"This is the virus strain list {virus_strain_list}")
+    print(f"This is the virus full name list {full_name_list}")
+
 
     strain2species = {}
     strain2stops = {}
 
     meta_list = []
     coverage_list = []
-    if args.metadata_loc:
-        metadata_sheet_location = args.metadata_loc
-        for x in range(0, len(virus_strain_list)):
-            metadata, coverage, full_name_list[x] = do_meta_data(
-                virus_strain_list[x], True, full_name_list[x])
-            meta_list.append(metadata)
-            coverage_list.append(coverage)
-    else:
-        for x in range(0, len(virus_strain_list)):
-            metadata, coverage, full_name_list[x] = do_meta_data(
-                virus_strain_list[x], False, full_name_list[x])
-            meta_list.append(metadata)
-            coverage_list.append(coverage)
 
     dblink_metadata_loc = {}
     if args.dblink_metadata_loc:
@@ -876,8 +869,6 @@ if __name__ == '__main__':
     for x in range(0, len(virus_strain_list)):
         strain2species[virus_strain_list[x]] = annotate_a_virus(virus_strain_list[x],
                                                                 virus_genome_list[x],
-                                                                meta_list[x],
-                                                                coverage_list[x],
                                                                 sbt_file_loc,
                                                                 full_name_list[x],
                                                                 nuc_acid_type,
@@ -897,4 +888,4 @@ if __name__ == '__main__':
 
     time = str(timeit.default_timer() - start_time)
     newtime = time.split('.')[0] + '.' + time.split('.')[1][0:1]
-    # print('Done, did  ' + str(len(virus_strain_list)) + ' viruses in ' + newtime + ' seconds')
+    print('Done, did  ' + str(len(virus_strain_list)) + ' viruses in ' + newtime + ' seconds')

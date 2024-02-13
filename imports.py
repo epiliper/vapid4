@@ -67,6 +67,14 @@ def write_fasta(strain, genome):
 # Writes an fsa file based of the name, strain and genome, honestly we should allow for much more flexibility
 # and automation here
 def write_fsa(strain, virus_genome, full_name, nucleic_acid_type):
+
+    # if full_name == '':
+    #     full_name = strain + \
+    #         ' (' + con.split('=')[1][:-1] + '/' + col.split('=')[1][:-1] + ')'
+
+
+    full_name = strain
+
     if nucleic_acid_type == 'RNA':
         fsa = open(strain + SLASH + strain + '.fsa', 'w')
         fsa.write(
@@ -281,11 +289,13 @@ def write_tbl(
 # NOTE: only writes coverage length - so now if we want to say our sequencing platform we have to edit this code
 # Now also writes in the comment the reference that this subission was annotated off - this should provide some more
 # accountability
-def write_cmt(sample_name, coverage, ref_gb, did_we_rc):
+
+#update: removed coverage
+def write_cmt(sample_name, ref_gb, did_we_rc):
     cmt = open(sample_name + SLASH + 'assembly.cmt', 'w')
     cmt.write('##Assembly-Data-START##\n')
-    if coverage != '':
-        cmt.write('Coverage\t' + coverage + '\n')
+    # if coverage != '':
+    #     cmt.write('Coverage\t' + coverage + '\n')
     if did_we_rc:
         cmt.write(
             'Original input sequence was reverse complemented by MAFFT during the alignment phase')
@@ -300,58 +310,6 @@ def write_cmt(sample_name, coverage, ref_gb, did_we_rc):
                   ' (github.com/greninger-lab/revica).' + '\n')
     cmt.write('##Assembly-Data-END##\n')
     cmt.close()
-
-# Build the metadata for every virus that's been submitted
-def do_meta_data(strain, sheet_exists, full_name):
-    first = True
-    s = ''
-    coverage = ''
-    metadata_sheet_location = ''
-
-    if sheet_exists:
-        metadata_sheet_location = args.metadata_loc
-        for line in open(metadata_sheet_location):
-            if first:
-                names = line.split(',')
-                first = False
-            elif line.split(',')[0] == strain:
-                for dex in range(0, len(names)):
-                    if names[dex].strip().lower == 'coverage':
-                        coverage = line.split(',')[dex].strip()
-                    elif names[dex].strip().lower() == 'full_name':
-                        if line.split(',')[dex].strip() != '':
-                            full_name = line.split(',')[dex].strip()
-                    else:
-                        s = s + ' [' + names[dex].strip() + '=' + \
-                            line.split(',')[dex].strip() + ']'
-                break
-
-    if s == '':
-        print(
-            'metadata not found in provided .csv or .csv not created -  time for minimal manual entry for sequence - ' +
-            strain)
-        col = ' [collection-date=' + input(
-            'Enter collection date in the format (23-Mar-2005, Mar-2005, or 2005): ').strip() + ']'
-        con = ' [country=' + \
-            input('Enter country sample was collected in (example - USA): ').strip() + ']'
-        st = ' [strain=' + \
-            input('Enter strain name - if unknown just put ' + strain + ': ').strip() + ']'
-        cov = input(
-            'Enter coverage as a number (example 42.3), if unknown just leave this blank and hit enter: ')
-        meta_data = col + con + st
-        coverage = cov
-        # Here's one line of code to unilaterally standardize defualt naming
-        # scheme
-        if full_name == '':
-            full_name = strain + \
-                ' (' + con.split('=')[1][:-1] + '/' + col.split('=')[1][:-1] + ')'
-
-    else:
-        meta_data = s
-        if full_name == '':
-            full_name = strain
-            print('Automatic strain naming failed but submission will proceed without metadata appended to the fasta header.')
-    return meta_data, coverage, full_name
 
 # create an sbt file to include DBlink info in the work directory and
 # return the full path of that sbt file.
