@@ -24,10 +24,17 @@ def arg_init():
         'author_template_file_loc',
         help='File path for the NCBI-provided sequence author template file'
         ' (should have a .sbt extension)\n https://submit.ncbi.nlm.nih.gov/genbank/template/submission/')
-    parser.add_argument(
-        '--metadata_loc',
-        help='If you\'ve input the metadata in the provided csv, specify the location '
-        'with this optional argument. Otherwise all metadata will be manually prompted for.')
+
+    ### DEPRECATING THIS FEATURE
+
+
+    # parser.add_argument(
+    #     '--metadata_loc',
+    #     help='If you\'ve input the metadata in the provided csv, specify the location '
+    #     'with this optional argument. Otherwise all metadata will be manually prompted for.')
+
+    ####
+    
     parser.add_argument(
         '--src_file', help='A tab-delimited source modifiers table (suffix .src). '
         'https://www.ncbi.nlm.nih.gov/WebSub/html/help/genbank-source-table.html')
@@ -71,6 +78,9 @@ def arg_init():
     parser.add_argument(
         '--output_loc',
         help='Specifies an output location for all files.')
+    parser.add_argument(
+            '--align_dir',
+            help='Specifies an output location for fasta header-specific working files')
     parser.add_argument(
         '--revica',
         help='Add Revica version used for consensus calling and github url.')
