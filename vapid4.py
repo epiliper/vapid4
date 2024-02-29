@@ -13,7 +13,8 @@ import timeit
 import re
 import subprocess
 
-from imports import * from arg_parse import arg_init, check_os
+from imports import * 
+from arg_parse import arg_init, check_os
 
 VERSION = 'v1.6.7'
 
@@ -673,6 +674,8 @@ def annotate_a_virus(
     # print('')
     os.chdir(run_dir)
     changed_folder = False
+
+    print('-----------------------------')
 
     return name_of_virus
 
