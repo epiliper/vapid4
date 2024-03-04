@@ -26,7 +26,17 @@ SLASH = check_os()
 
 # record run location of script
 run_dir = os.getcwd() + SLASH
-print(run_dir)
+# work_dir = os.path.abspath(str(args.work_dir)) + SLASH
+
+# get parent directory of input fasta, set it as working directory
+work_dir = os.path.dirname(os.path.abspath(args.fasta_file))
+
+
+print(f"Executing in working directory: {work_dir}")
+
+
+print("-----------------")
+
 
 # Reads in a fasta file that should have strain names for the names of the sequences -  can handle any number of
 # sequences. Also strips leading and trailing Ns or ?s from the provided sequence. Also takes an optional boolean
@@ -91,7 +101,7 @@ def blast_n_stuff(strain, our_fasta_loc):
         # blastn with word size of 28 because we're searching off a provided
         # reference we're just going to pull the top
         local_blast_cmd = 'blastn -db ' + local_database_location + ' -query ' + our_fasta_loc + \
-                          ' -num_alignments 1 -word_size 28 -outfmt 6 -out ' + strain + SLASH + strain \
+                          ' -num_alignments 1 -word_size 28 -outfmt 6 -num_threads 4 -out ' + strain + SLASH + strain \
                           + '.blastresults'
         subprocess.call(local_blast_cmd, shell=True)
 
@@ -163,31 +173,26 @@ def blast_n_stuff(strain, our_fasta_loc):
     # all virus is the preferred database but we'll switch to compressed if that's what the user downloaded
     # this list IS ordered by how much I recommend using these databases
     else:
-        # if os.path.isfile('all_virus.fasta.nin'):
-        #     local_database_location = 'all_virus.fasta'
-        # elif os.path.isfile('virus_compressed.fasta.nin'):
-        #     local_database_location = 'virus_compressed.fasta'
-        # elif os.path.isfile('ref_seq_vir.nin'):
-        #     local_database_location = 'ref_seq_vir'
         if os.path.isfile(run_dir + 'all_virus.fasta.nin'):
             local_database_location = run_dir + 'all_virus.fasta'
         elif os.path.isfile(run_dir + 'virus_compressed.fasta.nin'):
             local_database_location = run_dir + 'virus_compressed.fasta'
+            local_database_location = os.path.relpath(local_database_location, our_fasta_loc)
         elif os.path.isfile(run_dir + 'ref_seq_vir.nin'):
             local_database_location = run_dir + 'ref_seq_vir'
+            local_database_location = os.path.relpath(local_database_location, our_fasta_loc)
         # print a helpful error message and exit
+
         else:
             print('No local blast database found in this folder! Please install from the github releases page! '
                 '(https://github.com/rcs333/VAPiD/releases) Or use vapid with --online (not reccomended)')
             print('Exiting...')
             exit(0)
-        
-        # print('Searching local blast database at ' + local_database_location)
-
+            
         # we're only going to save one because these our pretty decent
         # reference databases
-        local_blast_cmd = 'blastn -db ' + local_database_location + ' -query ' + our_fasta_loc + \
-                          ' -num_alignments 1 -word_size 28 -outfmt 6 -out ' + strain + SLASH + strain \
+        local_blast_cmd = 'blastn -db ' + os.path.relpath(local_database_location, os.getcwd())+ ' -query ' + our_fasta_loc + \
+                          ' -num_alignments 1 -word_size 28 -outfmt 6 -num_threads 4 -out ' + strain + SLASH + strain \
                           + '.blastresults'
 
         subprocess.call(local_blast_cmd, shell=True)
@@ -195,7 +200,7 @@ def blast_n_stuff(strain, our_fasta_loc):
         # pull first accession number
         for line in open(strain + SLASH + strain + '.blastresults'):
             ref_seq_gb = line.split('|')[3]
-            # print(ref_seq_gb)
+            print(ref_seq_gb)
             break
 
     # Download the reference fasta file from
@@ -230,18 +235,13 @@ def blast_n_stuff(strain, our_fasta_loc):
                 # in order to tend towards being more general
                 name_of_virus = ' '.join(line.split()[1:]).split('strain')[0].split('isolate')[0].split(
                     'complete')[0].split('partial')[0].split('genomic')[0].split('from')[0].strip()
-    # let the user know
-    # print(ref_seq_gb + ' was the selected reference')
-    # print(name_of_virus + ' was the parsed name of the virus')
 
     if args.f:
         SeqIO.convert(
             args.f,
             "genbank",
             strain +
-            SLASH +
-            strain +
-            "_ref.fasta",
+            SLASH + strain + "_ref.fasta",
             "fasta")
     else:
         h = Entrez.efetch(
@@ -301,7 +301,6 @@ def blast_n_stuff(strain, our_fasta_loc):
         if ali_list[1][0:3] == '_R_':
             # we need to RC input query and redo
             need_to_rc = True
-    # print('Done alignment')
     # this is the reverse of what I expect but it works
     ref_seq = ali_genomes[1]
     our_seq = ali_genomes[0]
@@ -407,9 +406,6 @@ def pull_correct_annotations(strain, our_seq, ref_seq, genome):
                     allow_one = False
 
         # adjust gene list
-        # print(all_loc_list)
-        # print(all_product_list)
-        # print(name_of_the_feature_list)
         for entry in range(0, len(all_loc_list)):
             for y in range(0, len(all_loc_list[entry])):
                 all_loc_list[entry][y] = adjust(
@@ -470,15 +466,13 @@ def annotate_a_virus(
     ## if dir provided to store alignment results, create it and store all header-specific folders there. 
     ## else, store each alignment folder in working directory (can get messy).
 
-
     if args.align_dir: 
-        work_dir = str(args.align_dir)
-        if not os.path.exists(work_dir):
-            os.makedirs(work_dir)
+        align_dir = str(args.align_dir)
+        if not os.path.exists(align_dir):
+            os.makedirs(align_dir)
 
         # changing folder while alignment files are being saved
-        os.chdir(work_dir)
-        changed_folder = True;
+        os.chdir(align_dir)
 
         if not os.path.exists(strain):
             os.makedirs(strain)
@@ -486,7 +480,6 @@ def annotate_a_virus(
     else: 
         if not os.path.exists(strain):
             os.makedirs(strain)
-        changed_folder = False;
 
     if '_R_' in strain:
         if strain[0:3] == '_R_':
@@ -494,6 +487,7 @@ def annotate_a_virus(
                 'WARNING: ' +
                 strain +
                 ' has _R_ as the first part of the sequence charachters YOU HAVE TO CHANGE THIS')
+
 
     write_fasta(strain, genome)
 
@@ -622,27 +616,32 @@ def annotate_a_virus(
             gene_of_interest,
             'HPIV2')
 
-    if changed_folder:
-        os.chdir(run_dir)
-        changed_folder = False
-
     # EDIT: output_loc coding addition
     output_loc = args.output_loc
+
+    ## detect if output_loc specified is absolute or relative; 
+    ## if relative, start it relative to working directory 
+    ## if absolute, then follow that path 
+
+    if not os.path.isabs(output_loc):
+        output_loc = os.path.abspath(work_dir) + SLASH + output_loc
+
     # Create the output directory if the specified one doesn't exist
     if not os.path.isdir(output_loc):
         os.mkdir(output_loc)
 
+
     # Path
     directory = "VAPiD_output"
-    path = os.path.join(output_loc, directory)
+    path = os.path.join(output_loc, directory) + SLASH + strain
+
     # Create the directory
     try:
-        os.mkdir(path)
+        os.makedirs(path)
     except OSError:
         pass
 
-    os.chdir(work_dir)
-    changed_folder = True
+    # os.chdir(path)
 
     write_tbl(
         strain,
@@ -663,7 +662,7 @@ def annotate_a_virus(
         sbt_loc = create_new_sbt(sbt_loc, dblink_meta[strain], strain)
 
     cmd = 'table2asn -indir ' + strain + SLASH + ' -t ' + sbt_loc + ' -Y ' + \
-        strain + SLASH + 'assembly.cmt -V vb -outdir ' + run_dir + path + SLASH + strain + SLASH + ' -src-file ' + src_file_loc + \
+        strain + SLASH + 'assembly.cmt -V vb -outdir ' + path + ' -src-file ' + src_file_loc + \
         ' -usemt many' 
     try:
         subprocess.call(cmd, shell=True)
@@ -673,11 +672,10 @@ def annotate_a_virus(
     # print('')
     # print('')
     os.chdir(run_dir)
-    changed_folder = False
 
     print('-----------------------------')
 
-    return name_of_virus
+    return name_of_virus, path
 
 
 # This function takes a nucleotide sequence that has non-templated G's inserted an unknown number of times and trims
@@ -844,15 +842,9 @@ def read_dblink_metadata_loc(dbmeta):
 # wrong. NOTE: requires tbl2asn to have successfully created a .gbf file or this will fail catastrophically
 # Now also returns if stop codons are in it or not so they'll be omitted
 # during the packaging phase
-def check_for_stops(sample_name):
+def check_for_stops(sample_name, output_folder):
     stops = 0
-    # EDIT: output_loc
-    output_loc = args.output_loc
-    # Path
-    directory = "VAPiD_output" + SLASH + sample_name
-    path = os.path.join(output_loc, directory)
-
-    for line in open(path + SLASH + sample_name + '.gbf'):
+    for line in open(output_folder + SLASH + sample_name + '.gbf'):
         if '*' in line:
             stops += 1
     if stops > 0:
@@ -868,6 +860,9 @@ def check_for_stops(sample_name):
 
 
 if __name__ == '__main__':
+
+
+    os.chdir(work_dir)
 
     start_time = timeit.default_timer()
 
@@ -885,22 +880,18 @@ if __name__ == '__main__':
     else:
         nuc_acid_type = 'RNA'
 
-
-
     sbt_file_loc = os.path.abspath(args.author_template_file_loc)
     src_file_loc = os.path.abspath(args.src_file)
     
-
-
     virus_strain_list, virus_genome_list, full_name_list = read_fasta(
         fasta_loc, args.slashes)
-
 
     strain2species = {}
     strain2stops = {}
 
     meta_list = []
     coverage_list = []
+    output_folders = []
 
     dblink_metadata_loc = {}
     if args.dblink_metadata_loc:
@@ -908,7 +899,7 @@ if __name__ == '__main__':
             args.dblink_metadata_loc)
 
     for x in range(0, len(virus_strain_list)):
-        strain2species[virus_strain_list[x]] = annotate_a_virus(virus_strain_list[x],
+        strain2species[virus_strain_list[x]], output_folder = annotate_a_virus(virus_strain_list[x],
                                                                 virus_genome_list[x],
                                                                 sbt_file_loc,
                                                                 full_name_list[x],
@@ -916,12 +907,13 @@ if __name__ == '__main__':
                                                                 dblink_metadata_loc,
                                                                 # args.src_file
                                                                 src_file_loc)
+        output_folders.append(output_folder)
         # now we've got a map of [strain] -> name of virus (with whitespace)
 
-    for name in virus_strain_list:
+    for name, output_folder in zip(virus_strain_list, output_folders):
         # now we've got a map of [strain] -> boolean value if there are stops
         # or not
-        strain2stops[name] = check_for_stops(name)
+        strain2stops[name] = check_for_stops(name, output_folder)
         if len(name) > 23:
             print(
                 'WARNING: ' +

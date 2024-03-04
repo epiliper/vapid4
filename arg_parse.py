@@ -20,6 +20,9 @@ def arg_init():
         'fasta_file',
         help='Input file in .fasta format containing complete or near complete '
         'genomes for all the viruses that you want to have annotated')
+    # parser.add_argument(
+    #         '--work_dir',
+    #         help='select directory where input .fasta is located')
     parser.add_argument(
         'author_template_file_loc',
         help='File path for the NCBI-provided sequence author template file'
