@@ -660,10 +660,16 @@ def annotate_a_virus(
     # different sbt file with those info
     if strain in dblink_meta.keys():
         sbt_loc = create_new_sbt(sbt_loc, dblink_meta[strain], strain)
+        
+    if args.src_file:
+        cmd = 'table2asn -indir ' + strain + SLASH + ' -t ' + sbt_loc + ' -Y ' + \
+            strain + SLASH + 'assembly.cmt -V vb -outdir ' + path + ' -src-file ' + src_file_loc + \
+            ' -usemt many' 
 
-    cmd = 'table2asn -indir ' + strain + SLASH + ' -t ' + sbt_loc + ' -Y ' + \
-        strain + SLASH + 'assembly.cmt -V vb -outdir ' + path + ' -src-file ' + src_file_loc + \
-        ' -usemt many' 
+    else: 
+        cmd = 'table2asn -indir ' + strain + SLASH + ' -t ' + sbt_loc + ' -Y ' + \
+            strain + SLASH + 'assembly.cmt -V vb -outdir ' + path + ' -usemt many' 
+\
     try:
         subprocess.call(cmd, shell=True)
     except BaseException:
@@ -881,7 +887,9 @@ if __name__ == '__main__':
         nuc_acid_type = 'RNA'
 
     sbt_file_loc = os.path.abspath(args.author_template_file_loc)
-    src_file_loc = os.path.abspath(args.src_file)
+    src_file_loc = ''
+    if args.src_file:
+        src_file_loc = os.path.abspath(args.src_file)
     
     virus_strain_list, virus_genome_list, full_name_list = read_fasta(
         fasta_loc, args.slashes)
