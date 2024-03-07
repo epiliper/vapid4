@@ -77,6 +77,7 @@ def read_fasta(fasta_file_loc, slashes=False):
             dna_string += line.strip()
     # Just to make sure all our sequences are on the same page
     genome_list.append(dna_string)
+
     return strain_list, genome_list, full_name_list
 
 
@@ -669,7 +670,6 @@ def annotate_a_virus(
     else: 
         cmd = 'table2asn -indir ' + strain + SLASH + ' -t ' + sbt_loc + ' -Y ' + \
             strain + SLASH + 'assembly.cmt -V vb -outdir ' + path + ' -usemt many' 
-\
     try:
         subprocess.call(cmd, shell=True)
     except BaseException:
