@@ -68,12 +68,12 @@ def arg_init():
         '--all',
         action='store_true',
         help='Use this flag to transfer ALL annotations from reference, this is largely untested')
-    parser.add_argument(
-        '--slashes', action='store_true', help='Use this flag to allow any characters in the name of your virus - This allows '
-        'you to submit with a fasta file formated like >Sample1 (Human/USA/2016/A) Complete CDS'
-        ' make sure that your metadata file only contains the first part of your name \'Sample1\' in the example above. '
-        'You can also submit names with slashes by specifying in the metadata sheet under the header full_name, if you do that '
-        'you do not need to use this flag')
+    # parser.add_argument(
+    #     '--slashes', action='store_true', help='Use this flag to allow any characters in the name of your virus - This allows '
+    #     'you to submit with a fasta file formated like >Sample1 (Human/USA/2016/A) Complete CDS'
+    #     ' make sure that your metadata file only contains the first part of your name \'Sample1\' in the example above. '
+    #     'You can also submit names with slashes by specifying in the metadata sheet under the header full_name, if you do that '
+    #     'you do not need to use this flag')
     parser.add_argument(
         '--dna',
         action='store_true',

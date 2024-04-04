@@ -44,7 +44,9 @@ print("-----------------")
 # the strains in the first one and the genomes as strings in the second list, the third list is only used when the slashes argument is true
 # also changes U's to T's
 
-def read_fasta(fasta_file_loc, slashes=False):
+def read_fasta(fasta_file_loc
+               # , slashes=False
+               ):
     strain_list = []
     genome_list = []
     full_name_list = []
@@ -52,10 +54,10 @@ def read_fasta(fasta_file_loc, slashes=False):
 
     for line in open(fasta_file_loc):
         if line[0] == '>':
-            if slashes:
-                full_name_list.append(line[1:])
-            else:
-                full_name_list.append('')
+            # if slashes:
+            full_name_list.append(line[1:])
+            # else:
+            #     full_name_list.append('')
 
             strain_list.append(line[1:].split()[0])
             if dna_string != '':
@@ -892,7 +894,9 @@ if __name__ == '__main__':
         src_file_loc = os.path.abspath(args.src_file)
     
     virus_strain_list, virus_genome_list, full_name_list = read_fasta(
-        fasta_loc, args.slashes)
+        fasta_loc
+        # , args.slashes
+    )
 
     strain2species = {}
     strain2stops = {}
