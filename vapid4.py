@@ -26,12 +26,15 @@ SLASH = check_os()
 
 # record run location of script
 run_dir = os.getcwd() + SLASH
+run_dir = os.path.abspath(os.path.dirname(__file__)) + SLASH
+
 # work_dir = os.path.abspath(str(args.work_dir)) + SLASH
 
 # get parent directory of input fasta, set it as working directory
 work_dir = os.path.dirname(os.path.abspath(args.fasta_file))
 
 
+print(f"Running in executing directory: {run_dir}")
 print(f"Executing in working directory: {work_dir}")
 
 
